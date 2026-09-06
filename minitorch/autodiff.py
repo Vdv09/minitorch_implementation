@@ -22,8 +22,17 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
     Returns:
         An approximation of $f'_i(x_0, \ldots, x_{n-1})$
     """
-    # TODO: Implement for Task 1.1.
-    raise NotImplementedError('Need to implement for Task 1.1')
+    vals_list = list(vals)
+
+    vals_plus = vals_list.copy()
+    vals_minus = vals_list.copy()
+
+    vals_plus[arg] = vals_plus[arg] + epsilon
+    vals_minus[arg] = vals_minus[arg] - epsilon
+
+    answer = (f(*vals_plus) - f(*vals_minus)) / (2 * epsilon)
+
+    return answer
 
 
 variable_count = 1
@@ -61,8 +70,23 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
     Returns:
         Non-constant Variables in topological order starting from the right.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError('Need to implement for Task 1.4')
+    used = set()
+    answer = []
+
+    def go(v):
+        if v.is_constant() or v.unique_id in used:
+            return
+        
+        for parent in v.parents:
+            go(parent)
+        
+        used.add(v.unique_id)
+        answer.append(v)
+    
+    go(variable)
+    answer.reverse()
+
+    return answer
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -76,8 +100,26 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError('Need to implement for Task 1.4')
+    top_sort = topological_sort(variable)
+    derivatives = dict()
+    derivatives[variable.unique_id] = deriv
+
+    for v in top_sort:
+        d_output = derivatives[v.unique_id]
+
+        if v.is_leaf():
+            v.accumulate_derivative(d_output)
+        else:
+            for parent, d_parent in v.chain_rule(d_output):
+                if parent.is_constant():
+                    continue
+
+                if parent.unique_id not in derivatives.keys():
+                    derivatives[parent.unique_id] = 0
+
+                derivatives[parent.unique_id] = derivatives[parent.unique_id] + d_parent
+
+    
 
 
 @dataclass
